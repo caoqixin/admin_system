@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Models\Costumer;
 use App\Models\Repair;
 use App\Models\Warranty;
 use Encore\Admin\Controllers\AdminController;
@@ -38,7 +39,11 @@ class WarrantyController extends AdminController
             $actions->disableDelete();
         });
 
-        $grid->quickSearch();
+        $grid->quickSearch(function ($model, $query) {
+            $user = Costumer::firstWhere('phone_number', $query);
+            $warranty_id = $user->repairs->first()->id;
+            $model->where('repair_id', $warranty_id);
+        });
 
         $grid->column('id', __('Id'));
         $grid->column('contact', '联系人')->display(function () {

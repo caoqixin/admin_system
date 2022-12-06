@@ -72,8 +72,8 @@
                         <td>€ {{  $orders['price']  }}</td>
                     </tr>
                     <tr>
-                        <th>Total Da Pagare:</th>
-                        <td>€ {{  $orders['price'] - $orders['deposit']  }}</td>
+                        <th>Residuo:</th>
+                        <td>€ {{  $orders['price'] - $orders['deposit']  }}.00</td>
                     </tr>
                 </table>
             </div>

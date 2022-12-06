@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers\Repair;
 
+use App\Admin\Controllers\Render\Components;
 use App\Admin\Controllers\Render\ShowDetail;
 use App\Admin\Extensions\EditPhoneDetail;
 use App\Admin\Extensions\EditUser;
@@ -16,7 +17,6 @@ use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
-use Encore\Admin\Show;
 use Illuminate\Support\Arr;
 
 class StandardRepair extends AdminController
@@ -37,7 +37,8 @@ class StandardRepair extends AdminController
     {
         $grid = new Grid(new Repair());
         // 倒序排序
-        $grid->model()->where('type', 0)->orderByDesc('created_at');
+        $grid->model()->where('type', 0)->where('status', '!=', 3)->orderByDesc('created_at');
+
         // 禁用不需要的功能
         $grid->disableFilter();
         $grid->disableExport();
@@ -72,7 +73,7 @@ class StandardRepair extends AdminController
             }));
         });
 
-        $grid->column('status', __('状态'))->select(config('manager.repair.status.standard'));
+        $grid->column('status', __('状态'))->select(Arr::except(config('manager.repair.status.standard'), 3));
 
         $grid->column('money', '应付款')->display(function () {
             return $this->price - $this->deposit . ' €';
@@ -82,17 +83,19 @@ class StandardRepair extends AdminController
 
         // 计算总维修数
         $grid->footer(function ($query) {
-            $total = $query->where('type', 0)->count();
-            $no_repair = $query->where('type', 0)->where(function ($query) {
-                $query->where('status', 0)
-                    ->orWhere('status', 1);
-            })->count();
+
+            $total = Repair::all()->count();
+            $no_repair = Repair::where('type', 0)->where(function ($q) {
+                $q->where('status', 0)
+                ->OrWhere('status', 1);
+            })->get()->count();
             $repaired = $total - $no_repair;
 
+
             return "
-<div style='padding: 10px;'>总维修数 ：$total </div>
-<div style='padding: 10px;'>未维修数 ：$no_repair </div>
-<div style='padding: 10px;'>已完成数 ：$repaired  </div>";
+<div style='padding: 10px;'>总维修数: {$total} </div>
+<div style='padding: 10px;'>未维修数: {$no_repair} </div>
+<div style='padding: 10px;'>已完成数: $repaired  </div>";
         });
 
         return $grid;
@@ -139,8 +142,9 @@ class StandardRepair extends AdminController
         // 维修情况
         $form->multipleSelect('problem', __('维修项'))
             ->options(Category::where('type', 0)->get()->pluck('name', 'id'))->required();
-        $form->multipleSelect('components', '选择配件')
-            ->options(Component::all()->pluck('name', 'id'));
+        // $form->multipleSelect('components', '选择配件')
+        //     ->options(Component::all()->pluck('name', 'id'));
+        $form->belongsToMany('components', Components::class, '配件选择');
         $form->select('status', __('状态'))->options(config('manager.repair.status.standard'));
         $form->currency('deposit', __('订金'))->symbol('€');
         $form->currency('price', __('价格'))->symbol('€')->required();
@@ -183,7 +187,7 @@ class StandardRepair extends AdminController
             } elseif ($form->isEditing() && $form->status == 3) {
                 // 创建保修
                 return redirect()->action([StandardRepair::class, 'createWarranty'], ['id' => $repiar_id])
-                    ->with('take', $form->model()->updated_at);
+                ->with('take', $form->model()->updated_at);
             }
         });
 

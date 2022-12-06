@@ -9,7 +9,6 @@ use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Show;
-use Illuminate\Support\Facades\DB;
 
 class ComponentController extends AdminController
 {
@@ -39,23 +38,31 @@ class ComponentController extends AdminController
             $selector->select('brand', '品牌', config('manager.component.brand'));
             $selector->select('quality', '品质', config('manager.component.quality'));
             // 类型分类
-            $selector->select('categories', '分类',
-                Category::where('type', 0)->get()->pluck('name', 'id')->toArray(), function ($query, $value) {
+            $selector->select(
+                'categories',
+                '分类',
+                Category::where('type', 0)->get()->pluck('name', 'id')->toArray(),
+                function ($query, $value) {
                     $categories = Category::find($value[0]);
                     $component_id = $categories->components()->get()->map(function ($components) {
                         return $components->pivot->component_id;
                     });
                     $query->whereIn('id', $component_id);
-                });
+                }
+            );
             // 屏幕品牌分类
-            $selector->select('dispaly_categories', '屏幕品牌',
-                Category::where('type', 2)->get()->pluck('name', 'id')->toArray(), function ($query, $value) {
+            $selector->select(
+                'dispaly_categories',
+                '屏幕品牌',
+                Category::where('type', 2)->get()->pluck('name', 'id')->toArray(),
+                function ($query, $value) {
                     $categories = Category::find($value[0]);
                     $component_id = $categories->components()->get()->map(function ($components) {
                         return $components->pivot->component_id;
                     });
                     $query->whereIn('id', $component_id);
-                });
+                }
+            );
         });
         // 搜索
         $grid->quickSearch('name', 'aliasName')->placeholder('输入配件名称');
@@ -143,11 +150,11 @@ class ComponentController extends AdminController
             ->states(config('manager.component.states'))
             ->default(1);
 
-//        $form->saving(function (Form $form) {
-//            if ($form->isEditing() && $form->stock == 0) {
-//                $form->is_finish = !$form->is_finish;
-//            }
-//        });
+        //        $form->saving(function (Form $form) {
+        //            if ($form->isEditing() && $form->stock == 0) {
+        //                $form->is_finish = !$form->is_finish;
+        //            }
+        //        });
         return $form;
     }
 }
