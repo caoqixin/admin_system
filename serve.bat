@@ -1,1 +1,1 @@
-php artisan serve --port 9500
+php artisan serve

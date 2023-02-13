@@ -87,7 +87,7 @@ class StandardRepair extends AdminController
             $total = Repair::all()->count();
             $no_repair = Repair::where('type', 0)->where(function ($q) {
                 $q->where('status', 0)
-                ->OrWhere('status', 1);
+                    ->OrWhere('status', 1);
             })->get()->count();
             $repaired = $total - $no_repair;
 
@@ -144,7 +144,8 @@ class StandardRepair extends AdminController
             ->options(Category::where('type', 0)->get()->pluck('name', 'id'))->required();
         // $form->multipleSelect('components', '选择配件')
         //     ->options(Component::all()->pluck('name', 'id'));
-        $form->belongsToMany('components', Components::class, '配件选择');
+
+        $form->belongsToMany('components', Components::class, '配件选择')->options(Component::all()->pluck('name', 'id'));
         $form->select('status', __('状态'))->options(config('manager.repair.status.standard'));
         $form->currency('deposit', __('订金'))->symbol('€');
         $form->currency('price', __('价格'))->symbol('€')->required();
@@ -182,12 +183,11 @@ class StandardRepair extends AdminController
                         return redirect()->action([StandardRepair::class, 'order'], ['id' => $repiar_id])
                             ->withInput();
                     }
-
                 }
             } elseif ($form->isEditing() && $form->status == 3) {
                 // 创建保修
                 return redirect()->action([StandardRepair::class, 'createWarranty'], ['id' => $repiar_id])
-                ->with('take', $form->model()->updated_at);
+                    ->with('take', $form->model()->updated_at);
             }
         });
 
@@ -277,6 +277,4 @@ class StandardRepair extends AdminController
             ->title('保修')
             ->body(new Warranty(['repair_id' => $id]));
     }
-
-
 }
