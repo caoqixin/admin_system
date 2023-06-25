@@ -3,6 +3,7 @@
 namespace App\Admin\Controllers;
 
 use App\Admin\Controllers\Render\showUserRepair;
+use App\Admin\Extensions\Tools\ExportCSV;
 use App\Models\Costumer;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -27,9 +28,14 @@ class CostumerController extends AdminController
     {
         $grid = new Grid(new Costumer());
 
+        $grid->export(function ($export) {
+            $export->filename('phone');
+            $export->only(['name', 'phone_number']);
+            $export->originalValue(['name', 'phone_number']);
+        });
+
         // 禁用不需要的功能
         $grid->disableFilter();
-        $grid->disableExport();
         $grid->disableColumnSelector();
         $grid->actions(function ($actions) {
             // 去掉编辑
